@@ -19,6 +19,10 @@ class Student extends Personal
         System.out.print("Enter faculty: ");
         this.faculty = sc.next();
         sc.nextLine();
+        for(int i = this.faculty.length(); i < facultyLen; i++)
+        {
+            this.faculty += " ";   
+        }
     }
     public void readFromFile(RandomAccessFile in) throws IOException
     {
@@ -39,4 +43,9 @@ class Student extends Personal
     {
         return super.size() + 2 * facultyLen;
     }
+    
+    // public int getUID()
+    // {
+    //     return SSN;
+    // }
 }

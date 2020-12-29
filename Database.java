@@ -29,9 +29,12 @@ public class Database
             {
                 db.seek(db.getFilePointer() - record.size());
                 newRecord.writeToFile(db);
+                db.close();
+                return;
             }
         }
-        System.err.println("Record to modify not found");
+        db.close();
+        System.err.println("Record to update not found");
     }
     //Search Operation
     public boolean search(int id, boolean isStudent) throws IOException,EOFException
@@ -45,30 +48,30 @@ public class Database
             record.readFromFile(db);
             if(record.getUID() == id)
             {
+                db.close();
                 return true;
             }
         }
+        db.close();
         return false;
     }
-    public DbObject retrieve(int id, boolean isStudent) throws IOException,EOFException
+    public DbObject retrieve(int id, boolean isStudent) throws IOException
     {
         DbObject record;
         if(isStudent) record = new Student();
         else    record = new Personal();
         db = new RandomAccessFile(filename, "r");
         db.seek(0);
-        while(db.getFilePointer() < db.length() - 1)
+        while(db.getFilePointer() < db.length())
         {
-            System.out.println(db.getFilePointer() + ", " + db.length());
             record.readFromFile(db);
-            System.out.println("Size: " + record.size());
             if(record.getUID() == id){
                 db.close();
                 return record;
             }
         }
         db.close();
-        return record;
+        return null;
     }
     
     public void delete(int id, boolean isStudent) throws IOException, EOFException
@@ -77,19 +80,28 @@ public class Database
         record = isStudent? new Student() : new Personal();
         db = new RandomAccessFile(filename, "rw");
         db.seek(0);
-        while(db.getFilePointer() < db.length() - 1)
+        while(db.getFilePointer() < db.length())
         {
             record.readFromFile(db);
             if(record.getUID() == id)
             {
-                do{
-                    db.seek(db.getFilePointer() - 2 * record.size());
-                    record.writeToFile(db);
-                    db.seek(db.getFilePointer() + record.size());
-                    record.readFromFile(db);
-                }while(db.getFilePointer() < db.length() - 1);
+                if(db.getFilePointer() != db.length()){
+                    while(db.getFilePointer() < db.length()) {
+                        record.readFromFile(db);
+                        db.seek(db.getFilePointer() - 2 * record.size());
+                        record.writeToFile(db);
+                        db.seek(db.getFilePointer() + record.size());
+                    }
+                }
+                else
+                {
+                    db.setLength(db.length() - record.size());
+                }
+                System.out.println("Deleted Successfully!");
+                return;
             }
         }
+        System.out.println("Record not found!");
     }
     public void run(DbObject record) throws IOException
     {
@@ -109,7 +121,8 @@ public class Database
                 id = sc.nextInt();
                 sc.nextLine();
                 record = retrieve(id, isStudent);
-                record.display();
+                if(record != null)  record.display();
+                else    System.out.println("No record found!");
                 break;
             case 3:
                 System.out.println("Enter the id of the record to be modified: ");
@@ -120,10 +133,11 @@ public class Database
                 update(id, record);
                 break;
             case 4:
-                System.out.println("Enter the id of the record to be modified: ");
+                System.out.println("Enter the id of the record to be deleted: ");
                 id = sc.nextInt();
                 sc.nextLine();
                 delete(id, isStudent);
+                break;
             default:
                 System.out.println("Invalid option!\n");
                 break;
@@ -133,7 +147,7 @@ public class Database
     {
         System.out.println("1. Create a record\n" + 
                 "2. Retrieve a record\n" + 
-                "3. Update a record\n" + 
+                "3. Update a record\n"  +
                 "4. Delete a record"
         );
     }

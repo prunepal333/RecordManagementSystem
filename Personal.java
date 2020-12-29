@@ -67,7 +67,7 @@ class Personal extends DbObject
     }
     public int getUID()
     {
-        return this.SSN;
+        return SSN;
     }
     public void display()
     {
